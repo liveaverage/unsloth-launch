@@ -33,14 +33,6 @@ else
     exit 1
 fi
 
-# Ensure restart policy is always in docker-compose.yml (no duplicate keys)
-if ! grep -q 'restart: always' docker-compose.yml; then
-    awk '
-    /unsloth-jupyter:/ && !found {print; found=1; next}
-    found && !printed && !/restart:/ {print "    restart: always"; printed=1}
-    {print}
-    ' docker-compose.yml > docker-compose.tmp && mv docker-compose.tmp docker-compose.yml
-fi
 
 # 4. Start the container
 $DOCKER_COMPOSE_CMD up -d unsloth-jupyter
