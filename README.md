@@ -7,6 +7,8 @@ A comprehensive Docker Compose framework for running [Unsloth](https://unsloth.a
 ### Prerequisites
 
 1. **Docker and Docker Compose** - [Install Docker](https://docs.docker.com/get-docker/)
+   - Modern Docker installations include `docker compose` as a subcommand
+   - Legacy `docker-compose` (separate binary) is also supported
 2. **NVIDIA Container Toolkit** (for GPU support) - [Install Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
 ### Basic Usage
