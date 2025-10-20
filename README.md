@@ -1,3 +1,15 @@
+## 🟢 Launchable One-Shot Initialization
+
+You can instantly set up and launch Unsloth with a single command using Launchable:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/liveaverage/unsloth-launch/refs/heads/main/oneshot.sh | bash
+```
+
+This will clone the repo, configure for no Jupyter password, and start the container with automatic restart.
+
+---
+
 # Unsloth Docker Framework
 
 A comprehensive Docker Compose framework for running [Unsloth](https://unsloth.ai/) notebooks locally with environment variable-based configuration for automatic notebook loading and model selection.

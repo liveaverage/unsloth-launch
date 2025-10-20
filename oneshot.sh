@@ -33,10 +33,13 @@ else
     exit 1
 fi
 
-# Ensure restart policy is always in docker-compose.yml
+# Ensure restart policy is always in docker-compose.yml (no duplicate keys)
 if ! grep -q 'restart: always' docker-compose.yml; then
-    echo "Adding restart: always to unsloth-jupyter service in docker-compose.yml..."
-    awk '/unsloth-jupyter:/ {print; print "    restart: always"; next} 1' docker-compose.yml > docker-compose.tmp && mv docker-compose.tmp docker-compose.yml
+    awk '
+    /unsloth-jupyter:/ && !found {print; found=1; next}
+    found && !printed && !/restart:/ {print "    restart: always"; printed=1}
+    {print}
+    ' docker-compose.yml > docker-compose.tmp && mv docker-compose.tmp docker-compose.yml
 fi
 
 # 4. Start the container
