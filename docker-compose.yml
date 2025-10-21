@@ -24,6 +24,10 @@ services:
         limits:
           memory: ${MEMORY_LIMIT:-16G}
     
+    # Load environment variables from .env file
+    env_file:
+      - .env
+    
     # Environment variables
     environment:
       # Official Unsloth Docker environment variables
