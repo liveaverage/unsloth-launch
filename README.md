@@ -256,10 +256,18 @@ export NOTEBOOK_URL=https://example.com/my-notebook.ipynb
 
 ## 🔧 Troubleshooting
 
-### GPU Not Detected
-1. Verify NVIDIA drivers: `nvidia-smi`
-2. Check Docker GPU support: `docker run --rm --gpus all nvidia/cuda:11.8-base-ubuntu20.04 nvidia-smi`
-3. Install NVIDIA Container Toolkit
+### GPU Not Detected in PyTorch
+**⚠️ IMPORTANT:** If `torch.cuda.is_available()` returns `False` even with GPU present:
+
+This setup includes a fix for missing `LD_LIBRARY_PATH`. See [`GPU_FIX_QUICK_START.md`](GPU_FIX_QUICK_START.md) for immediate resolution.
+
+Full details: [`docs/GPU_SETUP_FIX.md`](docs/GPU_SETUP_FIX.md)
+
+**Common GPU Issues:**
+1. Verify NVIDIA drivers on host: `nvidia-smi`
+2. Check Docker GPU support: `docker run --rm --gpus all nvidia/cuda:12.8-base-ubuntu20.04 nvidia-smi`
+3. Verify NVIDIA Container Toolkit: `docker run --rm --gpus all nvidia/cuda:12.8-base-ubuntu20.04 nvidia-smi`
+4. Test LD_LIBRARY_PATH in container: `docker exec unsloth-notebook echo $LD_LIBRARY_PATH`
 
 ### Memory Issues
 Adjust memory limits in `.env`:

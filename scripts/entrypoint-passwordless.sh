@@ -4,9 +4,17 @@ set -e
 # Custom Unsloth Entrypoint - Passwordless Jupyter
 # This replaces the default Unsloth entrypoint to disable Jupyter authentication
 
+# Set LD_LIBRARY_PATH for CUDA libraries (FIX for PyTorch GPU detection)
+export LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+export CUDA_HOME="/usr/local/cuda-12.8"
+
 echo "Exporting environment variables for SSH sessions..."
-printenv | grep -E '^HF_|^CUDA_|^NCCL_|^JUPYTER_|^SSH_|^PUBLIC_|^USER_|^UNSLOTH_|^PATH=' | \
+printenv | grep -E '^HF_|^CUDA_|^NCCL_|^JUPYTER_|^SSH_|^PUBLIC_|^USER_|^UNSLOTH_|^PATH=|^LD_LIBRARY_PATH=' | \
     sed 's/^\([^=]*\)=\(.*\)$/export \1="\2"/' > /tmp/unsloth_environment
+
+# Also explicitly set LD_LIBRARY_PATH and CUDA_HOME in bashrc
+echo 'export LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"' >> /home/unsloth/.bashrc
+echo 'export CUDA_HOME="/usr/local/cuda-12.8"' >> /home/unsloth/.bashrc
 
 # Source it in user's bashrc (no sudo needed)
 echo 'source /tmp/unsloth_environment' >> /home/unsloth/.bashrc
