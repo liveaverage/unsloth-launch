@@ -1,12 +1,21 @@
-## 🟢 Launchable One-Shot Initialization
+## 🟢 Unsloth on Brev
 
-You can instantly set up and launch Unsloth with a single command using Launchable:
+Run this command to instantly set up and launch Unsloth for local (non-swarm) Docker setups:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/liveaverage/unsloth-launch/refs/heads/main/oneshot.sh | bash
 ```
 
-This will clone the repo, configure for no Jupyter password, and start the container with automatic restart.
+**What happens:**
+- The Unsloth repo is cloned to `/tmp/unsloth-launch`
+- The environment is configured for no Jupyter password
+- The Docker container is started with GPU support (if available)
+- Jupyter Lab is available at [http://localhost:8888](http://localhost:8888)
+
+**Note:**
+- This setup is for local Docker Compose only (not Swarm mode)
+- GPU support is enabled via `gpus: all` in `docker-compose.yml`
+- No password is set for Jupyter Lab by default
 
 ---
 

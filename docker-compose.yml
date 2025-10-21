@@ -1,4 +1,3 @@
-
 services:
   unsloth-jupyter:
     # Option 1: Use official unsloth image directly
@@ -11,6 +10,7 @@ services:
     
     container_name: ${CONTAINER_NAME:-unsloth-notebook}
     restart: unless-stopped
+    gpus: all
     
     # GPU support and resource limits
     deploy:
