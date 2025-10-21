@@ -16,8 +16,10 @@ cd "$REPO_DIR"
 # 2. Set up environment for no Jupyter password
 echo "Setting up .env for no Jupyter password..."
 cp -f .env.template .env
-sed -i '/^JUPYTER_PASSWORD=/d' .env
-echo "JUPYTER_PASSWORD=" >> .env
+grep -v '^JUPYTER_PASSWORD=' .env > .env.tmp
+echo "JUPYTER_PASSWORD=" >> .env.tmp
+echo "" >> .env.tmp
+mv .env.tmp .env
 
 # 3. Detect docker compose command
 if docker compose version &> /dev/null; then
