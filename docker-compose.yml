@@ -94,6 +94,11 @@ services:
     # Working directory
     working_dir: /workspace
     
+    # Custom entrypoint for passwordless Jupyter
+    entrypoint:
+      - /bin/bash
+      - /workspace/scripts/entrypoint-passwordless.sh
+    
     # Command override for different notebook types
     command: ${STARTUP_COMMAND:-/workspace/scripts/start-jupyter.sh}
     
