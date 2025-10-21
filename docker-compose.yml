@@ -91,6 +91,10 @@ services:
       # Persistent storage
       - unsloth-home:/home/unsloth
       
+      # NVIDIA GPU driver libraries (dynamically discovered via runtime)
+      # The NVIDIA Container Runtime automatically mounts these when using "gpus: all"
+      # This is more reliable than hardcoded paths across different driver/CUDA versions
+      
       # Optional: mount host directories
       - ${HOST_NOTEBOOK_DIR:-./custom-notebooks}:/workspace/host-notebooks
       - ${HOST_DATA_DIR:-./data}:/workspace/host-data

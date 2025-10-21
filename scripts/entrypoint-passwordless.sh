@@ -4,6 +4,9 @@ set -e
 # Custom Unsloth Entrypoint - Passwordless Jupyter
 # This replaces the default Unsloth entrypoint to disable Jupyter authentication
 
+# Mount NVIDIA driver libraries (works across different driver versions)
+bash /workspace/scripts/mount-nvidia-libs.sh
+
 # Set LD_LIBRARY_PATH for CUDA libraries (FIX for PyTorch GPU detection)
 export LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
 export CUDA_HOME="/usr/local/cuda-12.8"
