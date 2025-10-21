@@ -33,6 +33,7 @@ services:
       # Official Unsloth Docker environment variables
       - JUPYTER_PORT=${JUPYTER_PORT:-8888}
       - JUPYTER_PASSWORD=${JUPYTER_PASSWORD:-}
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-}
       - SSH_KEY=${SSH_KEY:-}
       - USER_PASSWORD=${USER_PASSWORD:-unsloth2024}
       
