@@ -109,5 +109,119 @@ EOFPYTHON
 
 sudo mkdir -p /var/run/sshd
 
+# Fix Jupyter kernel to always have CUDA environment variables
+echo "Configuring Jupyter kernels with CUDA environment..."
+
+# Dynamically detect CUDA installation
+CUDA_PATHS=""
+CUDA_HOME_DETECTED=""
+
+# Check common CUDA installation locations
+for cuda_dir in /usr/local/cuda* /opt/cuda*; do
+    if [ -d "$cuda_dir/lib64" ]; then
+        echo "Found CUDA installation at: $cuda_dir"
+        CUDA_PATHS="$cuda_dir/lib64:$CUDA_PATHS"
+        if [ -z "$CUDA_HOME_DETECTED" ]; then
+            CUDA_HOME_DETECTED="$cuda_dir"
+        fi
+    fi
+done
+
+# Add system library paths
+CUDA_PATHS="${CUDA_PATHS}/usr/lib/x86_64-linux-gnu:/opt/conda/lib"
+
+# Use detected or fallback to environment variable
+CUDA_HOME_FINAL="${CUDA_HOME_DETECTED:-${CUDA_HOME:-/usr/local/cuda}}"
+
+echo "Using CUDA_HOME: $CUDA_HOME_FINAL"
+echo "Using LD_LIBRARY_PATH: $CUDA_PATHS"
+
+# Create kernel spec directory
+mkdir -p /home/unsloth/.local/share/jupyter/kernels/python3-cuda
+
+# Create a kernel with dynamically detected CUDA paths
+cat > /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json << KERNEL_EOF
+{
+  "argv": [
+    "/opt/conda/bin/python3",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "Python 3 (CUDA)",
+  "language": "python",
+  "env": {
+    "LD_LIBRARY_PATH": "${CUDA_PATHS}",
+    "CUDA_HOME": "${CUDA_HOME_FINAL}",
+    "CUDA_ROOT": "${CUDA_HOME_FINAL}",
+    "CUDA_PATH": "${CUDA_HOME_FINAL}",
+    "CUDA_VISIBLE_DEVICES": "all",
+    "NVIDIA_VISIBLE_DEVICES": "all",
+    "PATH": "${CUDA_HOME_FINAL}/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+  }
+}
+KERNEL_EOF
+
+# Also update the default Python 3 kernel if it exists
+if [ -d "/opt/conda/share/jupyter/kernels/python3" ]; then
+    echo "Updating default Python 3 kernel with CUDA environment..."
+    sudo cp /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json /opt/conda/share/jupyter/kernels/python3/kernel.json
+fi
+
+# Create IPython startup script for CUDA initialization
+mkdir -p /home/unsloth/.ipython/profile_default/startup
+cat > /home/unsloth/.ipython/profile_default/startup/00-cuda-setup.py << IPYTHON_EOF
+import os
+import sys
+import glob
+
+# Dynamically detect CUDA installation
+cuda_dirs = glob.glob('/usr/local/cuda*') + glob.glob('/opt/cuda*')
+cuda_paths = []
+cuda_home = None
+
+for cuda_dir in cuda_dirs:
+    lib64_path = os.path.join(cuda_dir, 'lib64')
+    if os.path.exists(lib64_path):
+        cuda_paths.append(lib64_path)
+        if cuda_home is None:
+            cuda_home = cuda_dir
+
+# Add system library paths
+cuda_paths.extend(['/usr/lib/x86_64-linux-gnu', '/opt/conda/lib'])
+
+# Build LD_LIBRARY_PATH
+ld_library_path = ':'.join(cuda_paths)
+if 'LD_LIBRARY_PATH' in os.environ:
+    ld_library_path = ld_library_path + ':' + os.environ['LD_LIBRARY_PATH']
+
+# Use detected CUDA or fallback
+if cuda_home is None:
+    cuda_home = os.environ.get('CUDA_HOME', '/usr/local/cuda')
+
+# Set environment variables
+os.environ['LD_LIBRARY_PATH'] = ld_library_path
+os.environ['CUDA_HOME'] = cuda_home
+os.environ['CUDA_ROOT'] = cuda_home
+os.environ['CUDA_PATH'] = cuda_home
+os.environ['CUDA_VISIBLE_DEVICES'] = os.environ.get('CUDA_VISIBLE_DEVICES', 'all')
+os.environ['NVIDIA_VISIBLE_DEVICES'] = os.environ.get('NVIDIA_VISIBLE_DEVICES', 'all')
+
+print(f"CUDA configured: {cuda_home}")
+print(f"LD_LIBRARY_PATH: {ld_library_path}")
+
+# Force PyTorch to reinitialize CUDA if needed
+try:
+    import torch
+    if hasattr(torch.cuda, '_lazy_init'):
+        torch.cuda._lazy_init()
+    print(f"PyTorch CUDA available: {torch.cuda.is_available()}")
+except:
+    pass  # PyTorch may not be imported yet
+IPYTHON_EOF
+
+echo "✓ Jupyter kernels configured with CUDA environment"
+
 echo "Handing over control to supervisord..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
