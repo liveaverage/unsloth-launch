@@ -1,18 +1,19 @@
+
 services:
   unsloth-jupyter:
-    # Option 1: Use official unsloth image directly
+    # Option 1: Use official Unsloth image
     image: unsloth/unsloth:latest
-    
-    # Option 2: Use custom image with additional tools (uncomment below and comment above)
+
+    # Option 2: Build a custom image (uncomment to use a Dockerfile that pre-installs CUDA PyTorch)
     # build:
     #   context: .
     #   dockerfile: Dockerfile
-    
+
     container_name: ${CONTAINER_NAME:-unsloth-notebook}
     restart: unless-stopped
+
+    # Ensure GPU access
     gpus: all
-    
-    # GPU support and resource limits
     deploy:
       resources:
         reservations:
@@ -23,149 +24,84 @@ services:
           memory: ${MEMORY_RESERVATION:-8G}
         limits:
           memory: ${MEMORY_LIMIT:-16G}
-    
-    # Load environment variables from .env file
+
     env_file:
       - .env
-    
-    # Environment variables
+
     environment:
-      # Official Unsloth Docker environment variables
-      - JUPYTER_PORT=${JUPYTER_PORT:-8888}
-      - JUPYTER_PASSWORD=${JUPYTER_PASSWORD:-}
-      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-}
-      - SSH_KEY=${SSH_KEY:-}
-      - USER_PASSWORD=${USER_PASSWORD:-unsloth2024}
-      
-      # Additional configuration for automation
-      - NOTEBOOK_URL=${NOTEBOOK_URL:-}
-      - NOTEBOOK_PATH=${NOTEBOOK_PATH:-}
-      - AUTO_START_NOTEBOOK=${AUTO_START_NOTEBOOK:-false}
-      
-      # ML/AI configuration
-      - HF_TOKEN=${HF_TOKEN:-}
-      - WANDB_API_KEY=${WANDB_API_KEY:-}
-      
-      # Model configuration
-      - MODEL_NAME=${MODEL_NAME:-}
-      - MODEL_CACHE_DIR=${MODEL_CACHE_DIR:-/workspace/models}
-      - DATASET_NAME=${DATASET_NAME:-}
-      
-      # Training configuration
-      - MAX_SEQ_LENGTH=${MAX_SEQ_LENGTH:-2048}
-      - LOAD_IN_4BIT=${LOAD_IN_4BIT:-true}
-      - BATCH_SIZE=${BATCH_SIZE:-2}
-      - GRADIENT_ACCUMULATION_STEPS=${GRADIENT_ACCUMULATION_STEPS:-4}
-      - LEARNING_RATE=${LEARNING_RATE:-2e-4}
-      - NUM_TRAIN_EPOCHS=${NUM_TRAIN_EPOCHS:-1}
-      
-      # System configuration
-      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
-      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-all}
-      
-      # CUDA/GPU support - dynamically configured in entrypoint
-      # These are fallbacks if automatic detection fails
-      - LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:/opt/conda/lib}
-      - CUDA_HOME=${CUDA_HOME:-/usr/local/cuda}
-      - CUDA_ROOT=${CUDA_ROOT:-/usr/local/cuda}
-      - CUDA_PATH=${CUDA_PATH:-/usr/local/cuda}
-    
-    # Port mapping
+      # Unsloth / Jupyter
+      JUPYTER_PORT: ${JUPYTER_PORT:-8888}
+      JUPYTER_PASSWORD: ${JUPYTER_PASSWORD:-}
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-}
+      SSH_KEY: ${SSH_KEY:-}
+      USER_PASSWORD: ${USER_PASSWORD:-unsloth2024}
+
+      NOTEBOOK_URL: ${NOTEBOOK_URL:-}
+      NOTEBOOK_PATH: ${NOTEBOOK_PATH:-}
+      AUTO_START_NOTEBOOK: ${AUTO_START_NOTEBOOK:-false}
+
+      # ML/AI tokens (optional)
+      HF_TOKEN: ${HF_TOKEN:-}
+      WANDB_API_KEY: ${WANDB_API_KEY:-}
+
+      # Model / training config
+      MODEL_NAME: ${MODEL_NAME:-}
+      MODEL_CACHE_DIR: ${MODEL_CACHE_DIR:-/workspace/models}
+      DATASET_NAME: ${DATASET_NAME:-}
+      MAX_SEQ_LENGTH: ${MAX_SEQ_LENGTH:-2048}
+      LOAD_IN_4BIT: ${LOAD_IN_4BIT:-true}
+      BATCH_SIZE: ${BATCH_SIZE:-2}
+      GRADIENT_ACCUMULATION_STEPS: ${GRADIENT_ACCUMULATION_STEPS:-4}
+      LEARNING_RATE: ${LEARNING_RATE:-2e-4}
+      NUM_TRAIN_EPOCHS: ${NUM_TRAIN_EPOCHS:-1}
+
+      # ✅ Correct NVIDIA envs for GPU userland
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
+
+      # (Optional) CUDA paths if you rely on them inside the image
+      LD_LIBRARY_PATH: ${LD_LIBRARY_PATH:-/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:/opt/conda/lib}
+      CUDA_HOME: ${CUDA_HOME:-/usr/local/cuda}
+      CUDA_ROOT: ${CUDA_ROOT:-/usr/local/cuda}
+      CUDA_PATH: ${CUDA_PATH:-/usr/local/cuda}
+
+      # ❌ Removed: CUDA_VISIBLE_DEVICES=all (invalid for CUDA; let Docker/NVIDIA handle visibility)
+
+    # Improve stability/perf for PyTorch dataloaders, notebooks, etc.
+    shm_size: 2g
+    ipc: host
+
     ports:
-      - "${JUPYTER_HOST_PORT:-8888}:${JUPYTER_PORT:-8888}"  # Jupyter Lab
-      - "${SSH_HOST_PORT:-2222}:22"                         # SSH access
+      - "${JUPYTER_HOST_PORT:-8888}:${JUPYTER_PORT:-8888}"  # JupyterLab
+      - "${SSH_HOST_PORT:-2222}:22"                         # SSH
       - "${TENSORBOARD_HOST_PORT:-6006}:6006"               # TensorBoard
-    
-    # Volume mounts
+
     volumes:
-      # Main workspace (official unsloth structure)
       - ./work:/workspace/work
-      
-      # Additional directories for organization
       - ./custom-notebooks:/workspace/custom-notebooks
       - ./data:/workspace/data
       - ./models:/workspace/models
       - ./outputs:/workspace/outputs
-      
-      # Configuration and scripts (if using custom build)
       - ./scripts:/workspace/scripts
       - ./configs:/workspace/configs
-      
-      # Persistent storage
       - unsloth-home:/home/unsloth
-      
-      # NVIDIA GPU driver libraries (dynamically discovered via runtime)
-      # The NVIDIA Container Runtime automatically mounts these when using "gpus: all"
-      # This is more reliable than hardcoded paths across different driver/CUDA versions
-      
-      # Optional: mount host directories
       - ${HOST_NOTEBOOK_DIR:-./custom-notebooks}:/workspace/host-notebooks
       - ${HOST_DATA_DIR:-./data}:/workspace/host-data
-    
-    # Working directory
+
     working_dir: /workspace
-    
-    # Custom entrypoint for passwordless Jupyter
+
     entrypoint:
       - /bin/bash
       - /workspace/scripts/entrypoint-passwordless.sh
-    
-    # Command override for different notebook types
+
     command: ${STARTUP_COMMAND:-/workspace/scripts/start-jupyter.sh}
-    
-    # Health check
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${JUPYTER_PORT:-8888}/api"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # Optional: Separate service for specific notebook types
-  # unsloth-llama:
-  #   extends:
-  #     service: unsloth-jupyter
-  #   container_name: unsloth-llama
-  #   environment:
-  #     - MODEL_NAME=unsloth/llama-3-8b-bnb-4bit
-  #     - NOTEBOOK_PATH=/workspace/notebooks/llama-finetuning.ipynb
-  #     - AUTO_START_NOTEBOOK=true
-  #   profiles:
-  #     - llama
-
-  # unsloth-mistral:
-  #   extends:
-  #     service: unsloth-jupyter
-  #   container_name: unsloth-mistral
-  #   environment:
-  #     - MODEL_NAME=unsloth/mistral-7b-bnb-4bit
-  #     - NOTEBOOK_PATH=/workspace/notebooks/mistral-finetuning.ipynb
-  #     - AUTO_START_NOTEBOOK=true
-  #   profiles:
-  #     - mistral
-
-  # unsloth-qwen:
-  #   extends:
-  #     service: unsloth-jupyter
-  #   container_name: unsloth-qwen
-  #   environment:
-  #     - MODEL_NAME=unsloth/qwen2-7b-bnb-4bit
-  #     - NOTEBOOK_PATH=/workspace/notebooks/qwen-finetuning.ipynb
-  #     - AUTO_START_NOTEBOOK=true
-  #   profiles:
-  #     - qwen
-
-  # # Utility services
-  # notebook-downloader:
-  #   image: curlimages/curl:latest
-  #   container_name: notebook-downloader
-  #   volumes:
-  #     - ./notebooks:/workspace/notebooks
-  #     - ./scripts:/workspace/scripts
-  #   working_dir: /workspace
-  #   command: /workspace/scripts/download-notebooks.sh
-  #   profiles:
-  #     - download
 
 volumes:
   unsloth-home:
