@@ -171,8 +171,8 @@ cat > /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json << KER
     "CUDA_HOME": "${CUDA_HOME_FINAL}",
     "CUDA_ROOT": "${CUDA_HOME_FINAL}",
     "CUDA_PATH": "${CUDA_HOME_FINAL}",
-    "CUDA_VISIBLE_DEVICES": "all",
-    "NVIDIA_VISIBLE_DEVICES": "all",
+    "CUDA_VISIBLE_DEVICES": "0",
+    "NVIDIA_VISIBLE_DEVICES": "0",
     "PATH": "${CUDA_HOME_FINAL}/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   }
 }
@@ -222,8 +222,9 @@ os.environ['LD_LIBRARY_PATH'] = ld_library_path
 os.environ['CUDA_HOME'] = cuda_home
 os.environ['CUDA_ROOT'] = cuda_home
 os.environ['CUDA_PATH'] = cuda_home
-os.environ['CUDA_VISIBLE_DEVICES'] = os.environ.get('CUDA_VISIBLE_DEVICES', 'all')
-os.environ['NVIDIA_VISIBLE_DEVICES'] = os.environ.get('NVIDIA_VISIBLE_DEVICES', 'all')
+# Force GPU visibility - override any 'void' settings
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['NVIDIA_VISIBLE_DEVICES'] = '0'
 
 print(f"CUDA environment configured: {cuda_home}")
 
