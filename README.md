@@ -257,11 +257,14 @@ export NOTEBOOK_URL=https://example.com/my-notebook.ipynb
 ## 🔧 Troubleshooting
 
 ### GPU Not Detected in PyTorch
-**⚠️ IMPORTANT:** If `torch.cuda.is_available()` returns `False` even with GPU present:
+**✅ FIXED:** This framework includes an **automatic fix** for the GPU detection issue in the official Unsloth image.
 
-This setup includes a fix for missing `LD_LIBRARY_PATH`. See [`GPU_FIX_QUICK_START.md`](GPU_FIX_QUICK_START.md) for immediate resolution.
+The fix:
+- **Dynamically detects** your CUDA version (11.x, 12.x, etc.)
+- **Automatically configures** Jupyter kernels with CUDA paths
+- **No manual configuration** needed - works out of the box!
 
-Full details: [`docs/GPU_SETUP_FIX.md`](docs/GPU_SETUP_FIX.md)
+See [`GPU_CUDA_FIX.md`](GPU_CUDA_FIX.md) for technical details.
 
 **Common GPU Issues:**
 1. Verify NVIDIA drivers on host: `nvidia-smi`

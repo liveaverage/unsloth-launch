@@ -208,17 +208,35 @@ os.environ['CUDA_PATH'] = cuda_home
 os.environ['CUDA_VISIBLE_DEVICES'] = os.environ.get('CUDA_VISIBLE_DEVICES', 'all')
 os.environ['NVIDIA_VISIBLE_DEVICES'] = os.environ.get('NVIDIA_VISIBLE_DEVICES', 'all')
 
-print(f"CUDA configured: {cuda_home}")
-print(f"LD_LIBRARY_PATH: {ld_library_path}")
+print(f"CUDA environment configured: {cuda_home}")
 
-# Force PyTorch to reinitialize CUDA if needed
-try:
-    import torch
-    if hasattr(torch.cuda, '_lazy_init'):
-        torch.cuda._lazy_init()
-    print(f"PyTorch CUDA available: {torch.cuda.is_available()}")
-except:
-    pass  # PyTorch may not be imported yet
+# CRITICAL FIX: Force PyTorch CUDA initialization in Docker environments
+# This must happen before any other PyTorch operations
+def _force_cuda_init():
+    try:
+        import torch
+        # Force CUDA initialization - required in Docker environments
+        # where lazy initialization fails
+        torch.cuda.init()
+        
+        if torch.cuda.is_available():
+            device_name = torch.cuda.get_device_name(0)
+            print(f"✅ PyTorch CUDA initialized: {device_name}")
+            # Pre-warm CUDA to ensure it stays initialized
+            _ = torch.zeros(1).cuda()
+            return True
+        else:
+            print("⚠️ CUDA not available after forced init")
+            return False
+    except Exception as e:
+        print(f"Note: CUDA initialization: {e}")
+        return False
+
+# Run initialization
+_cuda_available = _force_cuda_init()
+
+# Clean up namespace
+del _force_cuda_init
 IPYTHON_EOF
 
 echo "✓ Jupyter kernels configured with CUDA environment"
