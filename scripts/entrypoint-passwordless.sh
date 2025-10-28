@@ -25,9 +25,13 @@ echo 'source /tmp/unsloth_environment' >> /home/unsloth/.bashrc
 # Use USER_PASSWORD from env, or default to 'unsloth'.
 FINAL_PASSWORD="${USER_PASSWORD:-unsloth}"
 
-# Set the password for the unsloth user
-echo "unsloth:${FINAL_PASSWORD}" | sudo chpasswd
-echo "User 'unsloth' password set."
+# Set the password for the unsloth user (if we have sudo access)
+if sudo -n true 2>/dev/null; then
+    echo "unsloth:${FINAL_PASSWORD}" | sudo chpasswd
+    echo "User 'unsloth' password set."
+else
+    echo "Note: Cannot set user password (no sudo access)"
+fi
 
 # Default values
 export JUPYTER_PORT=${JUPYTER_PORT:-8888}
@@ -64,13 +68,17 @@ for key_type in rsa ecdsa ed25519; do
 done
 
 if [ "$HOST_KEYS_OK" = false ]; then
-    echo "Generating SSH host keys..."
-    # Remove any existing (possibly corrupted) keys
-    sudo rm -f /etc/ssh/ssh_host_*
-    # Generate fresh keys
-    sudo ssh-keygen -A
-    # Verify they were created
-    sudo ls -la /etc/ssh/ssh_host_* 2>/dev/null || echo "Warning: SSH host keys may not have been generated properly"
+    if sudo -n true 2>/dev/null; then
+        echo "Generating SSH host keys..."
+        # Remove any existing (possibly corrupted) keys
+        sudo rm -f /etc/ssh/ssh_host_*
+        # Generate fresh keys
+        sudo ssh-keygen -A
+        # Verify they were created
+        sudo ls -la /etc/ssh/ssh_host_* 2>/dev/null || echo "Warning: SSH host keys may not have been generated properly"
+    else
+        echo "Note: Cannot generate SSH host keys (no sudo access)"
+    fi
 else
     echo "SSH host keys already exist and appear valid"
 fi
@@ -107,7 +115,14 @@ print(f'✓ Jupyter configured for PASSWORDLESS ACCESS')
 print(f'✓ Config written to {config_file}')
 EOFPYTHON
 
-sudo mkdir -p /var/run/sshd
+# Create SSH run directory if we have permissions
+if [ -w /var/run ]; then
+    mkdir -p /var/run/sshd
+elif sudo -n true 2>/dev/null; then
+    sudo mkdir -p /var/run/sshd
+else
+    echo "Note: Cannot create /var/run/sshd (no write access)"
+fi
 
 # Fix Jupyter kernel to always have CUDA environment variables
 echo "Configuring Jupyter kernels with CUDA environment..."
@@ -163,10 +178,12 @@ cat > /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json << KER
 }
 KERNEL_EOF
 
-# Also update the default Python 3 kernel if it exists
-if [ -d "/opt/conda/share/jupyter/kernels/python3" ]; then
+# Also try to update the default Python 3 kernel if we have write access
+if [ -d "/opt/conda/share/jupyter/kernels/python3" ] && [ -w "/opt/conda/share/jupyter/kernels/python3" ]; then
     echo "Updating default Python 3 kernel with CUDA environment..."
-    sudo cp /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json /opt/conda/share/jupyter/kernels/python3/kernel.json
+    cp /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json /opt/conda/share/jupyter/kernels/python3/kernel.json
+else
+    echo "Note: Cannot update system kernel (no write access), but user kernel 'Python 3 (CUDA)' is available"
 fi
 
 # Create IPython startup script for CUDA initialization
