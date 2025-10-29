@@ -113,24 +113,12 @@ check_nvidia_support() {
     return 1
 }
 
-create_default_env() {
-    if [ ! -f "$PROJECT_DIR/.env" ]; then
-        echo -e "${YELLOW}Creating default .env file...${NC}"
-        cp "$PROJECT_DIR/.env.template" "$PROJECT_DIR/.env"
-        echo -e "${GREEN}✓ Created .env file from template${NC}"
-        echo -e "${BLUE}Please edit .env file to customize your configuration${NC}"
-    fi
-}
-
 start_service() {
     local config=${1:-default}
     
     echo -e "${BLUE}Starting Unsloth with configuration: $config${NC}"
     
     cd "$PROJECT_DIR"
-    
-    # Create default .env if it doesn't exist
-    create_default_env
     
     # Check for specific configuration
     if [ "$config" != "default" ] && [ -f "configs/${config}.env" ]; then

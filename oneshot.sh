@@ -13,13 +13,9 @@ echo "Cloning $REPO_URL into $REPO_DIR ..."
 git clone "$REPO_URL" "$REPO_DIR"
 cd "$REPO_DIR"
 
-# 2. Set up environment for no Jupyter password
-echo "Setting up .env for no Jupyter password..."
-cp -f .env.template .env
-grep -v '^JUPYTER_PASSWORD=' .env > .env.tmp
-echo "JUPYTER_PASSWORD=" >> .env.tmp
-echo "" >> .env.tmp
-mv .env.tmp .env
+# 2. Configure for passwordless Jupyter (via environment variable)
+echo "Configuring for passwordless Jupyter..."
+export JUPYTER_PASSWORD=""
 
 # 3. Detect docker compose command
 if docker compose version &> /dev/null; then

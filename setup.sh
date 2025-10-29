@@ -77,36 +77,18 @@ for dir in "${directories[@]}"; do
     fi
 done
 
-# 3. Set up environment file
+# 3. Configuration info
 echo ""
-echo -e "${BLUE}3. Setting up environment configuration...${NC}"
-
-if [ ! -f ".env" ]; then
-    cp .env.template .env
-    echo -e "${GREEN}✅ Created .env from template${NC}"
-    
-    # Prompt for basic configuration
-    echo ""
-    echo -e "${YELLOW}Let's configure some basic settings:${NC}"
-    
-    read -p "Enter a Jupyter password (or press Enter for no password): " jupyter_password
-    if [ ! -z "$jupyter_password" ]; then
-        sed -i "s/JUPYTER_PASSWORD=/JUPYTER_PASSWORD=$jupyter_password/" .env
-    fi
-    
-    read -p "Enter your Hugging Face token (optional, press Enter to skip): " hf_token
-    if [ ! -z "$hf_token" ]; then
-        sed -i "s/HF_TOKEN=/HF_TOKEN=$hf_token/" .env
-    fi
-    
-    read -p "Enter your Wandb API key (optional, press Enter to skip): " wandb_key
-    if [ ! -z "$wandb_key" ]; then
-        sed -i "s/WANDB_API_KEY=/WANDB_API_KEY=$wandb_key/" .env
-    fi
-    
-else
-    echo -e "${YELLOW}📄 .env already exists${NC}"
-fi
+echo -e "${BLUE}3. Configuration...${NC}"
+echo -e "${GREEN}✅ No configuration files needed - everything has defaults${NC}"
+echo ""
+echo -e "${YELLOW}Optional: Set environment variables before starting:${NC}"
+echo "  export JUPYTER_PASSWORD=mypassword"
+echo "  export HF_TOKEN=hf_xxxxx"
+echo "  export WANDB_API_KEY=xxxxx"
+echo ""
+echo "Or just start with defaults (passwordless Jupyter):"
+echo "  docker compose up -d"
 
 # 4. Make scripts executable
 echo ""
@@ -135,19 +117,16 @@ echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo ""
 echo -e "${BLUE}Next steps:${NC}"
 echo "1. Start the environment:"
-echo -e "   ${YELLOW}./scripts/launcher.sh start${NC}"
+echo -e "   ${YELLOW}docker compose up -d${NC}"
 echo ""
 echo "2. Access Jupyter Lab:"
 echo -e "   ${YELLOW}http://localhost:8888${NC}"
 echo ""
-echo "3. Check out the examples:"
-echo -e "   ${YELLOW}ls examples/${NC}"
+echo "3. Test GPU detection:"
+echo -e "   ${YELLOW}Open work/test-gpu-cuda.ipynb and run all cells${NC}"
 echo ""
 echo "4. Read the documentation:"
 echo -e "   ${YELLOW}cat README.md${NC}"
-echo ""
-echo -e "${BLUE}For quick start:${NC}"
-echo -e "   ${YELLOW}cat QUICKSTART.md${NC}"
 
 echo ""
 echo "Happy fine-tuning! 🦥"
