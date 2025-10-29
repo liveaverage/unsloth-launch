@@ -25,9 +25,9 @@ services:
         limits:
           memory: ${MEMORY_LIMIT:-16G}
 
-    env_file:
-      - .env
-
+    # All configuration via environment variables with sensible defaults
+    # Override any variable: export VAR=value before running docker-compose
+    
     environment:
       # Unsloth / Jupyter
       JUPYTER_PORT: ${JUPYTER_PORT:-8888}
