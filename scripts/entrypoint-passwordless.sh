@@ -120,32 +120,50 @@ print(f'✓ Jupyter configured for PASSWORDLESS ACCESS')
 print(f'✓ Config written to {config_file}')
 EOFPYTHON
 
-# Create SSH run directory if we have permissions
-if [ -w /var/run ]; then
-    mkdir -p /var/run/sshd && echo "✓ Created /var/run/sshd"
-elif sudo -n true 2>/dev/null; then
-    sudo mkdir -p /var/run/sshd && echo "✓ Created /var/run/sshd (with sudo)"
+# Create SSH run directory with proper permissions
+echo "Setting up SSH prerequisites..."
+if sudo -n true 2>/dev/null; then
+    sudo mkdir -p /var/run/sshd
+    sudo chmod 755 /var/run/sshd
+    echo "✓ Created /var/run/sshd"
 else
-    echo "⚠ Cannot create /var/run/sshd (no write access) - SSH will not work"
+    mkdir -p /var/run/sshd 2>/dev/null && echo "✓ Created /var/run/sshd" || echo "⚠ Cannot create /var/run/sshd"
 fi
 
-# Verify sshd can access its directory
-if [ -d "/var/run/sshd" ]; then
-    echo "✓ /var/run/sshd exists"
-else
-    echo "⚠ /var/run/sshd does not exist - SSH will fail"
-fi
+# Ensure sshd_config has HostKey directives
+if [ -f "/etc/ssh/sshd_config" ]; then
+    # Check if HostKey directives exist
+    if ! grep -q "^HostKey /etc/ssh/ssh_host_rsa_key" /etc/ssh/sshd_config 2>/dev/null; then
+        echo "Adding HostKey directives to sshd_config..."
+        if sudo -n true 2>/dev/null; then
+            sudo bash -c 'cat >> /etc/ssh/sshd_config << EOF
 
-# Check if SSH setup succeeded and disable it in supervisord if not
-if [ ! -f "/etc/ssh/ssh_host_rsa_key" ] || [ ! -d "/var/run/sshd" ]; then
-    echo "⚠ SSH is not properly configured - disabling SSH daemon"
-    # Create a modified supervisord config that excludes SSH
-    if [ -f "/etc/supervisor/conf.d/supervisord.conf" ]; then
-        # Comment out sshd program in supervisord config
-        sudo sed -i '/^\[program:sshd\]/,/^$/s/^/;/' /etc/supervisor/conf.d/supervisord.conf 2>/dev/null || \
-        sed -i '/^\[program:sshd\]/,/^$/s/^/;/' /etc/supervisor/conf.d/supervisord.conf 2>/dev/null || \
-        echo "Note: Could not modify supervisord config to disable SSH"
+# Host keys added by entrypoint
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+EOF'
+            echo "✓ HostKey directives added"
+        fi
+    else
+        echo "✓ HostKey directives already present"
     fi
+fi
+
+# Check SSH setup and provide diagnostics
+echo "Checking SSH daemon configuration..."
+if [ ! -f "/etc/ssh/ssh_host_rsa_key" ]; then
+    echo "⚠ SSH host keys missing"
+elif [ ! -d "/var/run/sshd" ]; then
+    echo "⚠ /var/run/sshd directory missing"
+else
+    echo "✓ SSH prerequisites appear OK"
+fi
+
+# Check sshd configuration
+if command -v sshd &> /dev/null; then
+    echo "Testing sshd configuration..."
+    sshd -t 2>&1 || echo "⚠ sshd configuration test failed (this may be normal)"
 fi
 
 # Configure Jupyter kernel with CUDA environment variables
