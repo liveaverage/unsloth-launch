@@ -123,7 +123,16 @@ AUTO_START_NOTEBOOK=true
 
 ## ⚙️ Configuration
 
-### Environment Variables
+All configuration is via environment variables with sensible defaults built into `docker-compose.yml`.
+
+Override any setting by exporting before starting:
+```bash
+export JUPYTER_HOST_PORT=9000
+export HF_TOKEN=hf_xxxxx
+docker compose up -d
+```
+
+### Available Environment Variables
 
 #### Core Settings
 - `CONTAINER_NAME`: Container name (default: `unsloth-notebook`)

@@ -175,38 +175,38 @@ CUDA_HOME_FINAL="${CUDA_HOME_DETECTED:-${CUDA_HOME:-/usr/local/cuda}}"
 echo "Using CUDA_HOME: $CUDA_HOME_FINAL"
 echo "Using LD_LIBRARY_PATH: $CUDA_PATHS"
 
-# Create kernel spec directory
-mkdir -p /home/unsloth/.local/share/jupyter/kernels/python3-cuda
+# # Create kernel spec directory
+# mkdir -p /home/unsloth/.local/share/jupyter/kernels/python3-cuda
 
-# Create a kernel with dynamically detected CUDA paths
-cat > /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json << KERNEL_EOF
-{
-  "argv": [
-    "/opt/conda/bin/python3",
-    "-m",
-    "ipykernel_launcher",
-    "-f",
-    "{connection_file}"
-  ],
-  "display_name": "Python 3 (CUDA)",
-  "language": "python",
-  "env": {
-    "LD_LIBRARY_PATH": "${CUDA_PATHS}",
-    "CUDA_HOME": "${CUDA_HOME_FINAL}",
-    "CUDA_ROOT": "${CUDA_HOME_FINAL}",
-    "CUDA_PATH": "${CUDA_HOME_FINAL}",
-    "PATH": "${CUDA_HOME_FINAL}/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-  }
-}
-KERNEL_EOF
+# # Create a kernel with dynamically detected CUDA paths
+# cat > /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json << KERNEL_EOF
+# {
+#   "argv": [
+#     "/opt/conda/bin/python3",
+#     "-m",
+#     "ipykernel_launcher",
+#     "-f",
+#     "{connection_file}"
+#   ],
+#   "display_name": "Python 3 (CUDA)",
+#   "language": "python",
+#   "env": {
+#     "LD_LIBRARY_PATH": "${CUDA_PATHS}",
+#     "CUDA_HOME": "${CUDA_HOME_FINAL}",
+#     "CUDA_ROOT": "${CUDA_HOME_FINAL}",
+#     "CUDA_PATH": "${CUDA_HOME_FINAL}",
+#     "PATH": "${CUDA_HOME_FINAL}/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+#   }
+# }
+# KERNEL_EOF
 
-# Also try to update the default Python 3 kernel if we have write access
-if [ -d "/opt/conda/share/jupyter/kernels/python3" ] && [ -w "/opt/conda/share/jupyter/kernels/python3" ]; then
-    echo "Updating default Python 3 kernel with CUDA environment..."
-    cp /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json /opt/conda/share/jupyter/kernels/python3/kernel.json
-else
-    echo "Note: Cannot update system kernel (no write access), but user kernel 'Python 3 (CUDA)' is available"
-fi
+# # Also try to update the default Python 3 kernel if we have write access
+# if [ -d "/opt/conda/share/jupyter/kernels/python3" ] && [ -w "/opt/conda/share/jupyter/kernels/python3" ]; then
+#     echo "Updating default Python 3 kernel with CUDA environment..."
+#     cp /home/unsloth/.local/share/jupyter/kernels/python3-cuda/kernel.json /opt/conda/share/jupyter/kernels/python3/kernel.json
+# else
+#     echo "Note: Cannot update system kernel (no write access), but user kernel 'Python 3 (CUDA)' is available"
+# fi
 
 # Create IPython startup script for CUDA initialization
 mkdir -p /home/unsloth/.ipython/profile_default/startup
