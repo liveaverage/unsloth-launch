@@ -60,12 +60,12 @@ services:
       NVIDIA_DRIVER_CAPABILITIES: ${NVIDIA_DRIVER_CAPABILITIES:-compute,utility}
 
       # (Optional) CUDA paths if you rely on them inside the image
-      LD_LIBRARY_PATH: ${LD_LIBRARY_PATH:-/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:/opt/conda/lib}
+      # LD_LIBRARY_PATH: ${LD_LIBRARY_PATH:-/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:/opt/conda/lib}
       CUDA_HOME: ${CUDA_HOME:-/usr/local/cuda}
       CUDA_ROOT: ${CUDA_ROOT:-/usr/local/cuda}
       CUDA_PATH: ${CUDA_PATH:-/usr/local/cuda}
-
-      # ❌ Removed: CUDA_VISIBLE_DEVICES=all (invalid for CUDA; let Docker/NVIDIA handle visibility)
+      
+      # Let Docker/NVIDIA runtime handle GPU visibility automatically
 
     # Improve stability/perf for PyTorch dataloaders, notebooks, etc.
     shm_size: 2g

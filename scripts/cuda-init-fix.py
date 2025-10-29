@@ -12,9 +12,7 @@ import sys
 def force_cuda_init():
     """Force CUDA initialization for PyTorch in Docker environments."""
     
-    # Set environment variables if not already set
-    if 'CUDA_VISIBLE_DEVICES' not in os.environ:
-        os.environ['CUDA_VISIBLE_DEVICES'] = 'all'
+    # Let Docker/NVIDIA runtime handle GPU visibility - don't override
     
     try:
         import torch
@@ -52,3 +50,4 @@ def force_cuda_init():
 if __name__ == "__main__":
     success = force_cuda_init()
     sys.exit(0 if success else 1)
+
