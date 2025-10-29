@@ -68,19 +68,24 @@ for key_type in rsa ecdsa ed25519; do
 done
 
 if [ "$HOST_KEYS_OK" = false ]; then
+    echo "Generating SSH host keys..."
+    # Try with sudo first, then without
     if sudo -n true 2>/dev/null; then
-        echo "Generating SSH host keys..."
-        # Remove any existing (possibly corrupted) keys
-        sudo rm -f /etc/ssh/ssh_host_*
-        # Generate fresh keys
-        sudo ssh-keygen -A
-        # Verify they were created
-        sudo ls -la /etc/ssh/ssh_host_* 2>/dev/null || echo "Warning: SSH host keys may not have been generated properly"
+        sudo rm -f /etc/ssh/ssh_host_* 2>/dev/null
+        sudo ssh-keygen -A 2>/dev/null
     else
-        echo "Note: Cannot generate SSH host keys (no sudo access)"
+        # Try without sudo (may fail but worth trying)
+        ssh-keygen -A 2>/dev/null || echo "Note: Cannot generate SSH host keys (insufficient permissions - SSH will not work)"
+    fi
+    
+    # Verify keys were created
+    if [ -f "/etc/ssh/ssh_host_rsa_key" ]; then
+        echo "✓ SSH host keys generated successfully"
+    else
+        echo "⚠ SSH host keys not generated - SSH access will be unavailable (Jupyter still works)"
     fi
 else
-    echo "SSH host keys already exist and appear valid"
+    echo "✓ SSH host keys already exist and appear valid"
 fi
 
 # Configure Jupyter - PASSWORDLESS MODE
@@ -117,14 +122,33 @@ EOFPYTHON
 
 # Create SSH run directory if we have permissions
 if [ -w /var/run ]; then
-    mkdir -p /var/run/sshd
+    mkdir -p /var/run/sshd && echo "✓ Created /var/run/sshd"
 elif sudo -n true 2>/dev/null; then
-    sudo mkdir -p /var/run/sshd
+    sudo mkdir -p /var/run/sshd && echo "✓ Created /var/run/sshd (with sudo)"
 else
-    echo "Note: Cannot create /var/run/sshd (no write access)"
+    echo "⚠ Cannot create /var/run/sshd (no write access) - SSH will not work"
 fi
 
-# Fix Jupyter kernel to always have CUDA environment variables
+# Verify sshd can access its directory
+if [ -d "/var/run/sshd" ]; then
+    echo "✓ /var/run/sshd exists"
+else
+    echo "⚠ /var/run/sshd does not exist - SSH will fail"
+fi
+
+# Check if SSH setup succeeded and disable it in supervisord if not
+if [ ! -f "/etc/ssh/ssh_host_rsa_key" ] || [ ! -d "/var/run/sshd" ]; then
+    echo "⚠ SSH is not properly configured - disabling SSH daemon"
+    # Create a modified supervisord config that excludes SSH
+    if [ -f "/etc/supervisor/conf.d/supervisord.conf" ]; then
+        # Comment out sshd program in supervisord config
+        sudo sed -i '/^\[program:sshd\]/,/^$/s/^/;/' /etc/supervisor/conf.d/supervisord.conf 2>/dev/null || \
+        sed -i '/^\[program:sshd\]/,/^$/s/^/;/' /etc/supervisor/conf.d/supervisord.conf 2>/dev/null || \
+        echo "Note: Could not modify supervisord config to disable SSH"
+    fi
+fi
+
+# Configure Jupyter kernel with CUDA environment variables
 echo "Configuring Jupyter kernels with CUDA environment..."
 
 # Dynamically detect CUDA installation
