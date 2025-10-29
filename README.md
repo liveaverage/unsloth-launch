@@ -34,18 +34,15 @@ A comprehensive Docker Compose framework for running [Unsloth](https://unsloth.a
 
 ### Basic Usage
 
-1. **Clone and setup**:
+1. **Clone and navigate to the repo**:
    ```bash
-   # Create your environment file
-   cp .env.template .env
-   
-   # Edit .env to customize your configuration
-   nano .env
+   git clone https://github.com/your-repo/unsloth-launch.git
+   cd unsloth-launch
    ```
 
-2. **Start with default configuration**:
+2. **Start with default configuration** (no setup needed!):
    ```bash
-   ./scripts/launcher.sh start
+   docker-compose up -d
    ```
 
 3. **Access Jupyter Lab**: Open http://localhost:8888 in your browser
