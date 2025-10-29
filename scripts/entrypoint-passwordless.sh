@@ -22,15 +22,20 @@ echo 'export CUDA_HOME="/usr/local/cuda-12.8"' >> /home/unsloth/.bashrc
 # Source it in user's bashrc (no sudo needed)
 echo 'source /tmp/unsloth_environment' >> /home/unsloth/.bashrc
 
-# Use USER_PASSWORD from env, or default to 'unsloth'.
-FINAL_PASSWORD="${USER_PASSWORD:-unsloth}"
-
-# Set the password for the unsloth user (if we have sudo access)
-if sudo -n true 2>/dev/null; then
-    echo "unsloth:${FINAL_PASSWORD}" | sudo chpasswd
-    echo "User 'unsloth' password set."
+# Enable passwordless sudo for unsloth user
+echo "Configuring passwordless sudo for unsloth user..."
+if [ -d "/etc/sudoers.d" ]; then
+    echo "unsloth ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/unsloth > /dev/null 2>&1 || \
+    echo "unsloth ALL=(ALL) NOPASSWD:ALL" > /tmp/unsloth-sudo 2>/dev/null
+    
+    if sudo grep -q "unsloth.*NOPASSWD" /etc/sudoers.d/unsloth 2>/dev/null || \
+       sudo grep -q "unsloth.*NOPASSWD" /etc/sudoers 2>/dev/null; then
+        echo "✓ Passwordless sudo enabled for unsloth user"
+    else
+        echo "Note: Could not enable passwordless sudo (may already be configured)"
+    fi
 else
-    echo "Note: Cannot set user password (no sudo access)"
+    echo "Note: /etc/sudoers.d not found"
 fi
 
 # Default values
@@ -120,14 +125,14 @@ print(f'✓ Jupyter configured for PASSWORDLESS ACCESS')
 print(f'✓ Config written to {config_file}')
 EOFPYTHON
 
-# Create SSH run directory with proper permissions
+# Create SSH run directory - sshd looks for /run/sshd specifically
 echo "Setting up SSH prerequisites..."
-if sudo -n true 2>/dev/null; then
-    sudo mkdir -p /var/run/sshd
-    sudo chmod 755 /var/run/sshd
-    echo "✓ Created /var/run/sshd"
+sudo mkdir -p /run/sshd 2>/dev/null || mkdir -p /run/sshd 2>/dev/null || true
+sudo chmod 755 /run/sshd 2>/dev/null || chmod 755 /run/sshd 2>/dev/null || true
+if [ -d "/run/sshd" ]; then
+    echo "✓ Created /run/sshd"
 else
-    mkdir -p /var/run/sshd 2>/dev/null && echo "✓ Created /var/run/sshd" || echo "⚠ Cannot create /var/run/sshd"
+    echo "⚠ Cannot create /run/sshd - SSH will fail"
 fi
 
 # Ensure sshd_config has HostKey directives
