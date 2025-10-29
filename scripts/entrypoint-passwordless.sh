@@ -5,37 +5,28 @@ set -e
 # This replaces the default Unsloth entrypoint to disable Jupyter authentication
 
 # Mount NVIDIA driver libraries (works across different driver versions)
-bash /workspace/scripts/mount-nvidia-libs.sh
+# bash /workspace/scripts/mount-nvidia-libs.sh
 
-# Set LD_LIBRARY_PATH for CUDA libraries (FIX for PyTorch GPU detection)
-export LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
-export CUDA_HOME="/usr/local/cuda-12.8"
+# # Set LD_LIBRARY_PATH for CUDA libraries (FIX for PyTorch GPU detection)
+# export LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
+# export CUDA_HOME="/usr/local/cuda-12.8"
 
 echo "Exporting environment variables for SSH sessions..."
 printenv | grep -E '^HF_|^CUDA_|^NCCL_|^JUPYTER_|^SSH_|^PUBLIC_|^USER_|^UNSLOTH_|^PATH=|^LD_LIBRARY_PATH=' | \
     sed 's/^\([^=]*\)=\(.*\)$/export \1="\2"/' > /tmp/unsloth_environment
 
 # Also explicitly set LD_LIBRARY_PATH and CUDA_HOME in bashrc
-echo 'export LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"' >> /home/unsloth/.bashrc
-echo 'export CUDA_HOME="/usr/local/cuda-12.8"' >> /home/unsloth/.bashrc
+# echo 'export LD_LIBRARY_PATH="/usr/local/cuda-12.8/lib64:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"' >> /home/unsloth/.bashrc
+# echo 'export CUDA_HOME="/usr/local/cuda-12.8"' >> /home/unsloth/.bashrc
 
 # Source it in user's bashrc (no sudo needed)
 echo 'source /tmp/unsloth_environment' >> /home/unsloth/.bashrc
 
-# Enable passwordless sudo for unsloth user
-echo "Configuring passwordless sudo for unsloth user..."
-if [ -d "/etc/sudoers.d" ]; then
-    echo "unsloth ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/unsloth > /dev/null 2>&1 || \
-    echo "unsloth ALL=(ALL) NOPASSWD:ALL" > /tmp/unsloth-sudo 2>/dev/null
-    
-    if sudo grep -q "unsloth.*NOPASSWD" /etc/sudoers.d/unsloth 2>/dev/null || \
-       sudo grep -q "unsloth.*NOPASSWD" /etc/sudoers 2>/dev/null; then
-        echo "✓ Passwordless sudo enabled for unsloth user"
-    else
-        echo "Note: Could not enable passwordless sudo (may already be configured)"
-    fi
+# Passwordless sudo is configured via mounted /etc/sudoers.d/unsloth file
+if [ -f "/etc/sudoers.d/unsloth" ]; then
+    echo "✓ Passwordless sudo configured (via mounted sudoers file)"
 else
-    echo "Note: /etc/sudoers.d not found"
+    echo "⚠ Warning: /etc/sudoers.d/unsloth not found - sudo commands may fail"
 fi
 
 # Default values

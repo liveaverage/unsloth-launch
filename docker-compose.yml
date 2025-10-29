@@ -84,6 +84,7 @@ services:
       - ./outputs:/workspace/outputs
       - ./scripts:/workspace/scripts
       - ./configs:/workspace/configs
+      - ./configs/unsloth-sudoers:/etc/sudoers.d/unsloth:ro
       - unsloth-home:/home/unsloth
       - ${HOST_NOTEBOOK_DIR:-./custom-notebooks}:/workspace/host-notebooks
       - ${HOST_DATA_DIR:-./data}:/workspace/host-data

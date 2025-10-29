@@ -1,0 +1,3 @@
+# Allow unsloth user to run all commands without password
+unsloth ALL=(ALL) NOPASSWD:ALL
+
