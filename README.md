@@ -1,5 +1,10 @@
 ## 🟢 Unsloth on Brev
 
+[![CI](https://github.com/liveaverage/unsloth-launch/actions/workflows/ci.yml/badge.svg)](https://github.com/liveaverage/unsloth-launch/actions/workflows/ci.yml)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://hub.docker.com/r/unsloth/unsloth)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Shell](https://img.shields.io/badge/shell-bash-lightgrey.svg)](https://www.gnu.org/software/bash/)
+
 Run this command to instantly set up and launch Unsloth for local (non-swarm) Docker setups:
 
 ```bash
@@ -343,7 +348,34 @@ export DATASET_NAME=my_custom_dataset
 
 # Build custom image
 ./scripts/launcher.sh build
+
+# Run tests
+./scripts/test.sh
 ```
+
+## 🧪 Testing
+
+Run the test suite to verify your setup:
+
+```bash
+./scripts/test.sh
+```
+
+This checks:
+- ✓ Required files present
+- ✓ Shell script syntax
+- ✓ Docker compose configuration
+- ✓ Sudoers file permissions
+- ✓ Directory structure
+
+### Continuous Integration
+
+This project uses GitHub Actions for CI. On every push/PR:
+- ShellCheck linting
+- Docker build validation
+- Syntax checks
+
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for details.
 
 ## 🔒 Security Notes
 
